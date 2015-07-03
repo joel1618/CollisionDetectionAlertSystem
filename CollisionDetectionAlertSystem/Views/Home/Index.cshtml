@@ -36,7 +36,8 @@
     var primaryBoundingBox, secondaryBoundingBoxes = [];
     $(document).ready(function () {
         $("#modeoftransportation").text("Walking");
-        $('#trackposition').bootstrapSwitch('state', true);
+        $('#trackposition').bootstrapToggle('on');
+        
 
         $("#walking").click(function () {
             $("#modeoftransportation").text("Walking");
@@ -56,7 +57,7 @@
             ReevaluateLatitudeLongitude();
         });
 
-        $('input[id="trackposition"]').on('switchChange.bootstrapSwitch', function (event, state) {
+        $('#trackposition').change(function () {
             userActionPreventingSetCenter = 0;
             ReevaluateLatitudeLongitude();
         });
@@ -224,9 +225,11 @@
 
     function DeleteSecondaryBoundingBox(data) {
         for (var i = 0; i < secondaryBoundingBoxes.length; i++) {
-            if (data.fingerprint === secondaryBoundingBoxes[i].fingerprint) {
-                secondaryBoundingBoxes[i].boundingBox.setMap(null);
-                secondaryBoundingBoxes[i] = null;
+            if (data.fingerprint != null && secondaryBoundingBoxes[i] != null && secondaryBoundingBoxes[i].fingerprint != null) {
+                if (data.fingerprint === secondaryBoundingBoxes[i].fingerprint) {
+                    secondaryBoundingBoxes[i].boundingBox.setMap(null);
+                    secondaryBoundingBoxes[i] = null;
+                }
             }
         }
     }
@@ -347,7 +350,7 @@
     }
 
     function TrackPosition() {
-        return $("#trackposition").bootstrapSwitch('state');
+        return $("#trackposition").prop('checked');
     }
 
     function GetMapStyle() {
@@ -454,9 +457,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="dropdown">
-                                <button id="modeoftransportation" class="btn btn-default dropdown-toggle" type="button"
-                                        data-toggle="dropdown">
-                                    Mode<span class="caret"></span>
+                                <button id="modeoftransportation" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Mode<span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li role="presentation"><a id="walking">Walking</a></li>
@@ -471,7 +472,7 @@
                             <p>Track Position:</p>
                         </div>
                         <div class="col-md-4">
-                            <input id="trackposition" class="bootstrap-switch" type="checkbox" data-off-text="False" data-on-text="True">
+                            <input id="trackposition" type="checkbox" data-toggle="toggle">
                         </div>
                     </div>
                     <div class="row">
