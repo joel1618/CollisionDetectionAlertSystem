@@ -65,15 +65,20 @@
         var firstRun = true;
         //navigator.geolocation.watchPosition(success, error, options)
         navigator.geolocation.watchPosition(function (e) {
-            $("#speed").text(GetSpeed(e).toString());
-            $("#lat").text(GetLatitude(e).toString());
-            $("#long").text(GetLongitude(e).toString());
-            $("#fingerprint").text(new Fingerprint().get());
-            $("#heading").text(GetHeading(e).toString());
-            if (firstRun) {
-                firstRun = false;
-                SetupMap();
-                Initialize();
+            try{
+                $("#speed").text(GetSpeed(e).toString());
+                $("#lat").text(GetLatitude(e).toString());
+                $("#long").text(GetLongitude(e).toString());
+                $("#fingerprint").text(new Fingerprint().get());
+                $("#heading").text(GetHeading(e).toString());
+                if (firstRun) {
+                    firstRun = false;
+                    SetupMap();
+                    Initialize();
+                }
+            }
+            catch (error) {
+                alert("watchPosition error: " + error.message);
             }
         }, function (e) { }, { enableHighAccuracy: false, maximumAge: 30000 });
 
@@ -95,24 +100,40 @@
             cache: false,
             data: MovingObjectViewModel,
             success: function (data) {
-                if (data._movingObject.MovingObject != null && data._movingObject.MovingObject != undefined) {
-                    AddUpdatePrimaryBoundingBox(data._movingObject.MovingObject);
-                    EvaluateStatus(data);
+                try{
+                    if (data.status != null && data.status === "error") {
+                        alert("error reported by server: " + data.message);
+                    }
+                    if (data._movingObject != null) {
+                        if (data._movingObject.MovingObject != null && data._movingObject.MovingObject != undefined) {
+                            AddUpdatePrimaryBoundingBox(data._movingObject.MovingObject);
+                            EvaluateStatus(data);
+                        }
+                        if (data._movingObject.OtherMovingObjects != null) {
+                            EvaluateSecondaryBoundingBox(data._movingObject.OtherMovingObjects);
+                        }
+                        else {
+                            ClearSecondaryBoundingBoxes();
+                        }
+                    }
+                    else {
+                        alert("nothing returned from server.");
+                    }
+                    ReevaluateLatitudeLongitude();
+                    setTimeout(function () {
+                        Initialize();
+                    }, 1000);
                 }
-                if (data._movingObject.OtherMovingObjects != null) {
-                    EvaluateSecondaryBoundingBox(data._movingObject.OtherMovingObjects);
+                catch (error) {
+                    alert("javascript threw an error on success: " + error.message + " Retrying in 10 seconds.");
+                    setTimeout(function () {
+                        Initialize();
+                    }, 10000);
                 }
-                else {
-                    ClearSecondaryBoundingBoxes();
-                }
-                ReevaluateLatitudeLongitude();
-                setTimeout(function () {
-                    Initialize();
-                }, 1000);
             },
             error: function (data) {
                 ClearBoundingBoxes();
-                alert("Error: " + data.message + ". Connection to server may have been lost. Connection retry in 10 seconds.");
+                alert("ajax error: " + data.message + ". Connection to server may have been lost. Retrying in 10 seconds.");
                 setTimeout(function () {
                     Initialize();
                 }, 10000);
@@ -284,7 +305,7 @@
 
     var userActionPreventingSetCenter = 0, userDraggingMap = false;
     function InitDragListeners() {
-        google.maps.event.addListener(map, 'dragend', function () {
+        /*google.maps.event.addListener(map, 'dragend', function () {
             userDraggingMap = false;
             userActionPreventingSetCenter++;
             setTimeout(function () {
@@ -303,7 +324,7 @@
                 userActionPreventingSetCenter--;
                 ReevaluateLatitudeLongitude();
             }, 10000);
-        })
+        })*/
     }
 
     function SetupMap() {
